@@ -1,0 +1,28 @@
+#!/bin/bash
+
+
+#PBS -N PBS-HADOOP
+#PBS -l select=17:ncpus=8:mem=10gb
+#PBS -l walltime=72:00:00
+#PBS -j oe
+set -x
+
+NUM_HOSTS=$(wc -l < ${PBS_NODEFILE})
+export HADOOP_CONF_DIR="${MY_HADOOP_HOME}/config"
+
+: "Set up the configurations for myHadoop"
+$MY_HADOOP_HOME/bin/pbs-configure.sh -n $NUM_HOSTS -c $HADOOP_CONF_DIR
+
+: "Format HDFS"
+time $HADOOP_PREFIX/bin/hadoop --config $HADOOP_CONF_DIR namenode -format
+
+: "Start all Hadoop daemons"
+$HADOOP_PREFIX/bin/start-all.sh
+
+sleep 72h
+
+: "Stop all Hadoop daemons"
+$HADOOP_PREFIX/bin/stop-all.sh
+
+: "Clean up"
+$MY_HADOOP_HOME/bin/pbs-cleanup.sh -n $NUM_HOSTS
